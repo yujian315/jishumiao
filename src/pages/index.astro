@@ -1,0 +1,185 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const categories = [
+  {
+    name: 'AI 工具',
+    key: 'ai',
+    tools: [
+      {
+        name: 'Token 计算器',
+        description: '计算文本在不同 AI 模型中的 Token 数量与费用',
+        href: '/ai/token-counter',
+        emoji: '🔢',
+      },
+    ],
+  },
+  // {
+  //   name: '开发工具',
+  //   key: 'dev',
+  //   tools: [],
+  // },
+  // {
+  //   name: '文本工具',
+  //   key: 'text',
+  //   tools: [],
+  // },
+];
+---
+
+<BaseLayout title="技术喵 - 有趣的在线工具集合">
+  <main>
+    <header class="hero">
+      <div class="logo-row">
+        <span class="cat-icon">🐱</span>
+        <h1 class="site-title">技术喵</h1>
+      </div>
+      <p class="site-desc">一些有趣且实用的在线小工具</p>
+    </header>
+
+    {
+      categories.map((cat) => (
+        <section class="category-section">
+          <h2 class="category-title">
+            <span class="category-line" />
+            {cat.name}
+            <span class="category-line" />
+          </h2>
+          <div class="tools-grid">
+            {cat.tools.map((tool) => (
+              <a href={tool.href} class="tool-card">
+                <span class="tool-emoji">{tool.emoji}</span>
+                <h3 class="tool-name">{tool.name}</h3>
+                <p class="tool-desc">{tool.description}</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      ))
+    }
+
+    <footer class="site-footer">
+      <p>jishumiao.com</p>
+    </footer>
+  </main>
+</BaseLayout>
+
+<style>
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 72px 0 48px;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .cat-icon {
+    font-size: 44px;
+    display: inline-block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .site-title {
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: -1px;
+  }
+
+  .site-desc {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #999;
+  }
+
+  .category-section {
+    margin-bottom: 48px;
+  }
+
+  .category-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #999;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .category-line {
+    flex: 1;
+    height: 1px;
+    background: #eee;
+  }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .tool-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 14px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .tool-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    border-color: #ddd;
+  }
+
+  .tool-emoji {
+    font-size: 32px;
+    margin-bottom: 14px;
+    display: block;
+  }
+
+  .tool-name {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #1a1a2e;
+  }
+
+  .tool-desc {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.6;
+  }
+
+  .site-footer {
+    text-align: center;
+    padding: 48px 0;
+    color: #ccc;
+    font-size: 13px;
+  }
+
+  @media (max-width: 600px) {
+    .hero { padding: 48px 0 32px; }
+    .site-title { font-size: 30px; }
+    .tools-grid { grid-template-columns: 1fr; }
+  }
+</style>

@@ -1,0 +1,433 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+---
+
+<ToolLayout
+  title="Token 计算器"
+  description="在线计算文本在不同 AI 模型中的 Token 数量，支持 GPT-4、Claude、DeepSeek 等模型"
+>
+  <main class="tc-page">
+    <div class="tc-header">
+      <h1>Token 计算器</h1>
+      <p>输入文本，实时查看不同 AI 模型的 Token 数量与费用</p>
+    </div>
+
+    <div class="tc-layout">
+      <!-- Left: Input -->
+      <div class="tc-input-wrap">
+        <div class="tc-input-bar">
+          <span class="tc-input-label">输入文本</span>
+          <div class="tc-input-actions">
+            <button id="btn-paste" class="tc-btn">📋 粘贴</button>
+            <button id="btn-clear" class="tc-btn">✕ 清空</button>
+          </div>
+        </div>
+        <textarea
+          id="text-input"
+          placeholder="在这里输入或粘贴你的文本..."
+        ></textarea>
+        <div class="tc-stats">
+          <span id="char-count">0 字符</span>
+          <span class="tc-dot">·</span>
+          <span id="word-count">0 词</span>
+          <span class="tc-dot">·</span>
+          <span id="line-count">0 行</span>
+        </div>
+      </div>
+
+      <!-- Right: Results -->
+      <div class="tc-results">
+        <div class="tc-cards" id="model-cards"></div>
+        <div class="tc-pricing-wrap">
+          <div class="tc-pricing-header">
+            <span>费用估算</span>
+            <span class="tc-pricing-badge">输入价格</span>
+          </div>
+          <div class="tc-pricing" id="pricing-table"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</ToolLayout>
+
+<script>
+  const models = [
+    { name: 'GPT-4o',           color: '#10a37f', zhRate: 1.0,  pricing: 2.5   },
+    { name: 'GPT-4o mini',      color: '#10a37f', zhRate: 1.0,  pricing: 0.15  },
+    { name: 'Claude Sonnet 4',  color: '#d97706', zhRate: 0.85, pricing: 3     },
+    { name: 'Claude Haiku 3.5', color: '#d97706', zhRate: 0.85, pricing: 0.8   },
+    { name: 'DeepSeek V3',      color: '#4f46e5', zhRate: 0.65, pricing: 0.27  },
+    { name: 'Gemini 2.0 Flash', color: '#4285f4', zhRate: 1.0,  pricing: 0.1   },
+  ];
+
+  function estimateTokens(text: string, model: typeof models[0]): number {
+    if (!text) return 0;
+    let tokens = 0;
+    for (const ch of text) {
+      if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(ch)) {
+        tokens += 1.0 * model.zhRate + 0.4;
+      } else if (/[a-zA-Z]/.test(ch)) {
+        tokens += 0.27;
+      } else if (/\d/.test(ch)) {
+        tokens += 0.3;
+      } else if (/\s/.test(ch)) {
+        tokens += 0.1;
+      } else {
+        tokens += 0.4;
+      }
+    }
+    return Math.max(text.length > 0 ? 1 : 0, Math.round(tokens));
+  }
+
+  function countWords(text: string): number {
+    if (!text.trim()) return 0;
+    const en = text.match(/[a-zA-Z]+/g)?.length || 0;
+    const zh = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
+    return en + zh;
+  }
+
+  function fmt(n: number): string {
+    return n.toLocaleString();
+  }
+
+  function fmtPrice(tokens: number, pricePerM: number): string {
+    const cost = (tokens / 1_000_000) * pricePerM;
+    if (cost === 0) return '$0';
+    if (cost < 0.0001) return '< $0.0001';
+    return `$${cost.toFixed(4)}`;
+  }
+
+  const textarea = document.getElementById('text-input') as HTMLTextAreaElement;
+  const elChar = document.getElementById('char-count')!;
+  const elWord = document.getElementById('word-count')!;
+  const elLine = document.getElementById('line-count')!;
+  const elCards = document.getElementById('model-cards')!;
+  const elPrice = document.getElementById('pricing-table')!;
+
+  document.getElementById('btn-paste')!.onclick = async () => {
+    try {
+      textarea.value = await navigator.clipboard.readText();
+      textarea.dispatchEvent(new Event('input'));
+    } catch { textarea.focus(); }
+  };
+
+  document.getElementById('btn-clear')!.onclick = () => {
+    textarea.value = '';
+    textarea.dispatchEvent(new Event('input'));
+    textarea.focus();
+  };
+
+  function update() {
+    const text = textarea.value;
+    elChar.textContent = `${fmt(text.length)} 字符`;
+    elWord.textContent = `${fmt(countWords(text))} 词`;
+    elLine.textContent = `${fmt(text ? text.split('\n').length : 0)} 行`;
+
+    const results = models.map(m => ({ m, t: estimateTokens(text, m) }));
+
+    elCards.innerHTML = results.map(({ m, t }) => `
+      <div class="tc-card">
+        <div class="tc-card-dot" style="background:${m.color}"></div>
+        <div class="tc-card-name">${m.name}</div>
+        <div class="tc-card-num">${fmt(t)}</div>
+      </div>
+    `).join('');
+
+    elPrice.innerHTML = results.map(({ m, t }) => `
+      <div class="tc-price-row">
+        <span class="tc-price-name">
+          <i class="tc-price-dot" style="background:${m.color}"></i>
+          ${m.name}
+        </span>
+        <span class="tc-price-rate">$${m.pricing} /M</span>
+        <span class="tc-price-val">${fmtPrice(t, m.pricing)}</span>
+      </div>
+    `).join('');
+  }
+
+  textarea.addEventListener('input', update);
+  update();
+</script>
+
+<style is:global>
+  /* ===== Page ===== */
+  .tc-page {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 80px 24px 60px;
+  }
+
+  .tc-header {
+    margin-bottom: 36px;
+  }
+
+  .tc-header h1 {
+    font-size: 30px;
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+
+  .tc-header p {
+    color: #888;
+    font-size: 15px;
+  }
+
+  /* ===== Two-column layout ===== */
+  .tc-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ===== Input area ===== */
+  .tc-input-wrap {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e8e8ec;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tc-input-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f0f0f3;
+  }
+
+  .tc-input-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .tc-input-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .tc-btn {
+    padding: 4px 10px;
+    border: 1px solid #e5e5ea;
+    border-radius: 6px;
+    background: #fafafa;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: inherit;
+    color: #666;
+  }
+
+  .tc-btn:hover {
+    background: #f0f0f3;
+  }
+
+  .tc-page textarea {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    line-height: 1.75;
+    resize: vertical;
+    font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+    min-height: 420px;
+    color: #1a1a2e;
+    background: #fff;
+  }
+
+  .tc-page textarea::placeholder {
+    color: #c5c5c5;
+  }
+
+  .tc-stats {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 14px;
+    background: #fafafa;
+    border-top: 1px solid #f0f0f3;
+    font-size: 12px;
+    color: #999;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tc-dot {
+    color: #ddd;
+  }
+
+  /* ===== Right panel: cards + pricing ===== */
+  .tc-results {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: 72px;
+  }
+
+  /* -- Token cards -- */
+  .tc-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .tc-card {
+    background: #fff;
+    border: 1px solid #e8e8ec;
+    border-radius: 10px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tc-card-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-bottom: 8px;
+  }
+
+  .tc-card-name {
+    font-size: 11px;
+    color: #999;
+    font-weight: 500;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tc-card-num {
+    font-size: 22px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1;
+    color: #1a1a2e;
+  }
+
+  /* -- Pricing table -- */
+  .tc-pricing-wrap {
+    background: #fff;
+    border: 1px solid #e8e8ec;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .tc-pricing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid #f0f0f3;
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+  }
+
+  .tc-pricing-badge {
+    font-size: 10px;
+    background: #f0f0f3;
+    color: #888;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: 600;
+  }
+
+  .tc-pricing {
+    padding: 4px 0;
+  }
+
+  .tc-price-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .tc-price-row:not(:last-child) {
+    border-bottom: 1px solid #f5f5f8;
+  }
+
+  .tc-price-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    color: #444;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tc-price-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .tc-price-rate {
+    color: #bbb;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .tc-price-val {
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: right;
+    min-width: 64px;
+    color: #1a1a2e;
+    font-size: 13px;
+  }
+
+  /* ===== Mobile ===== */
+  @media (max-width: 768px) {
+    .tc-page {
+      padding-top: 68px;
+    }
+
+    .tc-header h1 {
+      font-size: 24px;
+    }
+
+    .tc-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .tc-page textarea {
+      min-height: 200px;
+    }
+
+    .tc-results {
+      position: static;
+    }
+
+    .tc-cards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .tc-card-num {
+      font-size: 18px;
+    }
+
+    .tc-price-rate {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .tc-cards {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>
