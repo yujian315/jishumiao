@@ -27,7 +27,7 @@ const categories = [
 ];
 ---
 
-<BaseLayout title="技术喵 - 有趣的在线工具集合">
+<BaseLayout title="技术喵 - 免费在线工具集合 | AI、开发、文本实用小工具" description="技术喵提供免费在线工具集合，包括 AI Token 计算器、开发工具、文本处理等实用小工具，简洁好用无广告。">
   <main>
     <header class="hero">
       <div class="logo-row">
@@ -58,8 +58,27 @@ const categories = [
       ))
     }
 
+    <section class="about-section">
+      <h2 class="about-title">关于技术喵</h2>
+      <p class="about-text">技术喵是一个免费的在线工具集合，专注于为开发者和创作者提供简洁、实用、无广告的小工具。所有工具均在浏览器端运行，无需注册，数据不上传。</p>
+      <div class="about-features">
+        <div class="about-item">
+          <h3>免费无广告</h3>
+          <p>所有工具完全免费，无弹窗无干扰</p>
+        </div>
+        <div class="about-item">
+          <h3>隐私安全</h3>
+          <p>数据仅在浏览器端处理，不会上传服务器</p>
+        </div>
+        <div class="about-item">
+          <h3>持续更新</h3>
+          <p>不断添加新工具，覆盖 AI、开发、文本等领域</p>
+        </div>
+      </div>
+    </section>
+
     <footer class="site-footer">
-      <p>jishumiao.com</p>
+      <p>&copy; {new Date().getFullYear()} jishumiao.com</p>
     </footer>
   </main>
 </BaseLayout>
@@ -170,6 +189,53 @@ const categories = [
     line-height: 1.6;
   }
 
+  .about-section {
+    margin-top: 20px;
+    padding: 48px 0;
+    border-top: 1px solid #f0f0f0;
+    text-align: center;
+  }
+
+  .about-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #333;
+  }
+
+  .about-text {
+    font-size: 14px;
+    color: #888;
+    line-height: 1.8;
+    max-width: 560px;
+    margin: 0 auto 28px;
+  }
+
+  .about-features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .about-item {
+    padding: 20px 16px;
+    background: #fafafa;
+    border-radius: 12px;
+  }
+
+  .about-item h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #333;
+  }
+
+  .about-item p {
+    font-size: 13px;
+    color: #999;
+    line-height: 1.5;
+  }
+
   .site-footer {
     text-align: center;
     padding: 48px 0;
@@ -181,5 +247,6 @@ const categories = [
     .hero { padding: 48px 0 32px; }
     .site-title { font-size: 30px; }
     .tools-grid { grid-template-columns: 1fr; }
+    .about-features { grid-template-columns: 1fr; }
   }
 </style>
